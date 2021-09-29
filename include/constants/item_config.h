@@ -17,6 +17,7 @@
 #define I_KEY_FOSSILS           GEN_7   // In Gen4+, all Gen 3 fossils became regular items.
 #define I_KEY_ESCAPE_ROPE       GEN_7   // In Gen8, Escape Rope became a Key Item. Keep in mind, this will make it free to buy in marts.
 #define I_LEGACY_HEALING_ITEMS  GEN_7   // In Gen7+, certain healing items recover less HP than they used to.
+#define I_EXP_SHARE             GEN_8   // In Gen6+, the EXP Share is a Key Item that affects the whole party. In Gen8, it's on by default.
 
 // Ball config
 #define I_LURE_BALL_MODIFIER    GEN_7   // In Gen7+, Lure Ball's catch multiplier is x5 instead of x3.

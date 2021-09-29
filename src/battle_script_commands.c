@@ -3735,31 +3735,43 @@ static void Cmd_getexp(void)
                 calculatedExp = gBaseStats[gBattleMons[gBattlerFainted].species].expYield * gBattleMons[gBattlerFainted].level / 7;
             #endif
 
-            #if B_SPLIT_EXP < GEN_6
-                if (viaExpShare) // at least one mon is getting exp via exp share
-                {
-                    *exp = SAFE_DIV(calculatedExp / 2, viaSentIn);
-                    if (*exp == 0)
-                        *exp = 1;
+            #if I_EXP_SHARE < GEN_6
+                #if B_SPLIT_EXP < GEN_6
+                    if (viaExpShare) // at least one mon is getting exp via exp share
+                    {
+                        *exp = SAFE_DIV(calculatedExp / 2, viaSentIn);
+                        if (*exp == 0)
+                            *exp = 1;
 
-                    gExpShareExp = calculatedExp / 2 / viaExpShare;
+                        gExpShareExp = calculatedExp / 2 / viaExpShare;
+                        if (gExpShareExp == 0)
+                            gExpShareExp = 1;
+                    }
+                    else
+                    {
+                        *exp = SAFE_DIV(calculatedExp, viaSentIn);
+                        if (*exp == 0)
+                            *exp = 1;
+                        gExpShareExp = 0;
+                    }
+                #else
+                    *exp = calculatedExp;
+                    gExpShareExp = calculatedExp / 2;
                     if (gExpShareExp == 0)
                         gExpShareExp = 1;
-                }
-                else
+                #endif
+            #else
+                calculatedExp = gBaseStats[gBattleMons[gBattlerFainted].species].expYield * gBattleMons[gBattlerFainted].level / 7;
+
+                if (gSaveBlock2Ptr->expShare) // exp share is turned on
                 {
-                    *exp = SAFE_DIV(calculatedExp, viaSentIn);
+                    *exp = calculatedExp / 2 / viaSentIn;
                     if (*exp == 0)
                         *exp = 1;
-                    gExpShareExp = 0;
-                }
-            #else
-                *exp = calculatedExp;
-                gExpShareExp = calculatedExp / 2;
-                if (gExpShareExp == 0)
-                    gExpShareExp = 1;
-            #endif
 
+                    viaExpShare = gSaveBlock1Ptr->playerPartyCount;
+                }
+            #endif
             gBattleScripting.getexpState++;
             gBattleStruct->expGetterMonId = 0;
             gBattleStruct->sentInPokes = sentIn;
@@ -3775,7 +3787,11 @@ static void Cmd_getexp(void)
             else
                 holdEffect = ItemId_GetHoldEffect(item);
 
+#if I_EXP_SHARE < GEN_6
             if (holdEffect != HOLD_EFFECT_EXP_SHARE && !(gBattleStruct->sentInPokes & 1))
+#else
+            if (!gSaveBlock2Ptr->expShare && !(gBattleStruct->sentInPokes & 1))
+#endif
             {
                 *(&gBattleStruct->sentInPokes) >>= 1;
                 gBattleScripting.getexpState = 5;
@@ -3801,7 +3817,7 @@ static void Cmd_getexp(void)
                     gBattleStruct->wildVictorySong++;
                 }
 
-                if (GetMonData(&gPlayerParty[gBattleStruct->expGetterMonId], MON_DATA_HP))
+                if (GetMonData(&gPlayerParty[gBattleStruct->expGetterMonId], MON_DATA_HP) && !GetMonData(&gPlayerParty[gBattleStruct->expGetterMonId], MON_DATA_IS_EGG))
                 {
                     if (gBattleStruct->sentInPokes & 1)
                         gBattleMoveDamage = *exp;
@@ -3809,8 +3825,12 @@ static void Cmd_getexp(void)
                         gBattleMoveDamage = 0;
 
                     // only give exp share bonus in later gens if the mon wasn't sent out
-                    if ((holdEffect == HOLD_EFFECT_EXP_SHARE) && ((gBattleMoveDamage == 0) || (B_SPLIT_EXP < GEN_6)))
-                        gBattleMoveDamage += gExpShareExp;
+                    #if I_EXP_SHARE > GEN_5
+                        if (gSaveBlock2Ptr->expShare)
+                    #else
+                        if ((holdEffect == HOLD_EFFECT_EXP_SHARE) && ((gBattleMoveDamage == 0) || (B_SPLIT_EXP < GEN_6)))
+                    #endif
+                            gBattleMoveDamage += gExpShareExp;
                     if (holdEffect == HOLD_EFFECT_LUCKY_EGG)
                         gBattleMoveDamage = (gBattleMoveDamage * 150) / 100;
                     if (gBattleTypeFlags & BATTLE_TYPE_TRAINER && B_TRAINER_EXP_MULTIPLIER <= GEN_7)

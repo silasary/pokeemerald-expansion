@@ -204,6 +204,11 @@ void NewGameInitData(void)
     WipeTrainerNameRecords();
     ResetTrainerHillResults();
     ResetContestLinkResults();
+#if I_EXP_SHARE > GEN_7
+    gSaveBlock2Ptr->expShare = 1;
+#elif I_EXP_SHARE > GEN_5
+    gSaveBlock2Ptr->expShare = 0;
+#endif
 }
 
 static void ResetMiniGamesRecords(void)
