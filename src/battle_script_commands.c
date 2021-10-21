@@ -3761,13 +3761,13 @@ static void Cmd_getexp(void)
                         gExpShareExp = 1;
                 #endif
             #else
-                calculatedExp = gBaseStats[gBattleMons[gBattlerFainted].species].expYield * gBattleMons[gBattlerFainted].level / 7;
-
                 if (gSaveBlock2Ptr->expShare) // exp share is turned on
                 {
-                    *exp = calculatedExp / 2 / viaSentIn;
-                    if (*exp == 0)
-                        *exp = 1;
+                    *exp = calculatedExp / 2;
+                    gExpShareExp = calculatedExp / 2;
+
+                    if (gExpShareExp == 0)
+                        gExpShareExp = 1;
 
                     viaExpShare = gSaveBlock1Ptr->playerPartyCount;
                 }
